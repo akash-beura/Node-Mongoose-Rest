@@ -11,9 +11,36 @@ var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 var app = express();
 
-const mongoose = require("mongoose");
-const Dishes = require("./models/dishes");
+// Mimicking a basic Authentication functionality
+auth = (req, res, next) => {
+  console.log(req.headers);
+  var authHeader = req.headers.authorization;
+  if (!authHeader) {
+    var err = new Error("You're not authenticated!");
+    res.setHeader('WWW-Authenticate', 'Basic');      
+    err.status = 401;
+    return next(err);
+  }
+  // We get the base64 encoded value as string, decode it as base64 string then decode it where we will get username:password as result
+  var auth = new Buffer(authHeader.split(" ")[1], "base64")
+    .toString()
+    .split(":");
+  var username = auth[0];
+  var password = auth[1];
 
+  if (username == "admin" && password == "password") {
+    next();
+  } else {
+    var err = new Error("You're not authenticated!");
+    res.setHeader("WWW-Authentication", "Basic");
+    err.status = 401;
+    return next(err);
+  }
+};
+
+app.use(auth);
+
+const mongoose = require("mongoose");
 const url = "mongodb://localhost:27017/conFusion";
 const connect = mongoose.connect(url);
 
