@@ -3,8 +3,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-var session = require('express-session');
-var FileStore = require('session-file-store')(session);
+var session = require("express-session");
+var FileStore = require("session-file-store")(session);
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -16,42 +16,31 @@ var app = express();
 // app.use(cookieParser("12345-43434-43443"));
 
 // We're making use of session and session-store, after using this the session object can be found on req.session
-app.use(session({
-  name: 'session-id',
-  secret: '12345-2345-33232-23223',
-  saveUninitialized: false,
-  store: new FileStore()
-}));
+app.use(
+  session({
+    name: "session-id",
+    secret: "12345-2345-33232-23223",
+    saveUninitialized: false,
+    store: new FileStore(),
+  })
+);
+
+// these 2 routes should be above since it doesn't requires authorization
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
 
 // Mimicking a basic Authentication functionality
 auth = (req, res, next) => {
   console.log(req.session);
+  // Check if session doesn't exists
   if (!req.session.user) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader) {
-      var err = new Error("You're not authenticated!");
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      return next(err);
-    }
-    // We get the base64 encoded value as string, decode it as base64 string then decode it where we will get username:password as result
-    var auth = new Buffer.from(authHeader.split(" ")[1], "base64")
-      .toString()
-      .split(":");
-    var username = auth[0];
-    var password = auth[1];
-
-    if (username == "admin" && password == "password") {
-      req.session.user = 'admin';
-      next();
-    } else {
-      var err = new Error("You're not authenticated!");
-      res.setHeader("WWW-Authentication", "Basic");
-      err.status = 401;
-      return next(err);
-    }
+  
+    var err = new Error("You're not authenticated!");
+    res.setHeader("WWW-Authenticate", "Basic");
+    err.status = 401;
+    return next(err);
   } else {
-    if (req.session.user == "admin") {
+    if (req.session.user == "authenticated") {
       next();
     } else {
       var err = new Error("You're not authenticated!");
@@ -86,8 +75,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/dishes", dishRouter);
 app.use("/promotions", promoRouter);
 app.use("/leaders", leaderRouter);
