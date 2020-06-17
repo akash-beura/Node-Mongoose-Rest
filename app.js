@@ -3,6 +3,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -11,11 +13,20 @@ var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 var app = express();
 
-app.use(cookieParser("12345-43434-43443"));
+// app.use(cookieParser("12345-43434-43443"));
+
+// We're making use of session and session-store, after using this the session object can be found on req.session
+app.use(session({
+  name: 'session-id',
+  secret: '12345-2345-33232-23223',
+  saveUninitialized: false,
+  store: new FileStore()
+}));
 
 // Mimicking a basic Authentication functionality
 auth = (req, res, next) => {
-  if (!req.signedCookies.user) {
+  console.log(req.session);
+  if (!req.session.user) {
     var authHeader = req.headers.authorization;
     if (!authHeader) {
       var err = new Error("You're not authenticated!");
@@ -31,7 +42,7 @@ auth = (req, res, next) => {
     var password = auth[1];
 
     if (username == "admin" && password == "password") {
-      res.cookie("user", "admin", { signed: true });
+      req.session.user = 'admin';
       next();
     } else {
       var err = new Error("You're not authenticated!");
@@ -40,7 +51,7 @@ auth = (req, res, next) => {
       return next(err);
     }
   } else {
-    if (req.signedCookies.user == "admin") {
+    if (req.session.user == "admin") {
       next();
     } else {
       var err = new Error("You're not authenticated!");
