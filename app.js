@@ -5,6 +5,8 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var session = require("express-session");
 var FileStore = require("session-file-store")(session);
+var passport = require("passport");
+var authenticate = require("./authenticate");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -24,6 +26,11 @@ app.use(
     store: new FileStore(),
   })
 );
+// Basically passport.initialize() initialises the authentication module.
+app.use(passport.initialize());
+// After the login method is called and we got the user object in req, this below call will ensure serialization of the user info & sthen store it in the session
+// If the session cookie is already in req, it will proceed accrodingly.
+app.use(passport.session());
 
 // these 2 routes should be above since it doesn't requires authorization
 app.use("/", indexRouter);
@@ -31,22 +38,13 @@ app.use("/users", usersRouter);
 
 // Mimicking a basic Authentication functionality
 auth = (req, res, next) => {
-  console.log(req.session);
-  // Check if session doesn't exists
-  if (!req.session.user) {
-  
+  // Check if user isn't authenticated
+  if (!req.user) {
     var err = new Error("You're not authenticated!");
-    res.setHeader("WWW-Authenticate", "Basic");
-    err.status = 401;
+    err.status = 403;
     return next(err);
   } else {
-    if (req.session.user == "authenticated") {
-      next();
-    } else {
-      var err = new Error("You're not authenticated!");
-      err.status = 401;
-      return next(err);
-    }
+    next();
   }
 };
 
