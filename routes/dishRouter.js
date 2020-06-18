@@ -17,6 +17,7 @@ dishRouter
 
   .get((req, res, next) => {
     Dishes.find({})
+      .populate("comments.author")
       .then(
         (dishes) => {
           res.statusCode = 200;
@@ -65,6 +66,7 @@ dishRouter
   .route("/:dishId")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           res.statusCode = 200;
@@ -113,6 +115,7 @@ dishRouter
   .route("/:dishId/comments")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           if (dish != null) {
@@ -135,11 +138,16 @@ dishRouter
         (dish) => {
           // Check if dish exists, then add the comment and save it.
           if (dish != null) {
+            req.body.author = req.user._id;
             dish.comments.push(req.body);
             dish.save().then(() => {
-              res.statusCode = 200;
-              res.setHeader("Content-Type", "application/json");
-              res.json(dish.comments);
+              Dishes.findById(dish._id)
+                .populate("comments.author")
+                .then((dish) => {
+                  res.statusCode = 200;
+                  res.setHeader("Content-Type", "application/json");
+                  res.json(dish.comments);
+                });
             });
           } else {
             err = new Error("Dish not found with id: " + req.params.dishId);
@@ -193,6 +201,7 @@ dishRouter
   .route("/:dishId/comments/:commentId")
   .get((req, res, next) => {
     Dishes.findById(req.params.dishId)
+      .populate("comments.author")
       .then(
         (dish) => {
           // Chcck
@@ -233,7 +242,12 @@ dishRouter
           if (req.body.comment) {
             dish.comments.id(req.params.commentId).comment = req.body.comment;
           }
-          dish.save().then(() => {
+          dish.save().then((dish) => {
+            Dishes.findById(dish._id)
+              .populate("comments.author")
+              .then((dish) => {
+                
+              });
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.json(dish.comments);
