@@ -9,8 +9,16 @@ var authenticate = require("../authenticate");
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get("/", function (req, res, next) {
-  res.send("respond with a resource");
+router.get("/", authenticate.verifyUser, authenticate.verifyAdmin, function (
+  req,
+  res,
+  next
+) {
+  User.find({}).then((users) => {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json(users);
+  });
 });
 
 router.post("/signup", (req, res, next) => {
@@ -19,16 +27,20 @@ router.post("/signup", (req, res, next) => {
     new User({ username: req.body.username }),
     req.body.password,
     (err, user) => {
+      console.log("here1");
       if (err) {
         // If user doesn't exists, explicitly send back the response.
         res.statusCode = 500;
         res.setHeader("Content-Type", "application/json");
         res.json({ err: err });
       } else {
-        if (req.body.firstname) user.firstname = req.body.firstname;
-        if (req.body.lastname) user.lastname = req.body.lastname;
+        console.log("here2");
+        if (req.body.firstName) user.firstName = req.body.firstName;
+        if (req.body.lastName) user.lastName = req.body.lastName;
         user.save((err, user) => {
+          console.log("here3");
           if (err) {
+            console.log("here4");
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
             res.json({ err: err });
@@ -36,6 +48,7 @@ router.post("/signup", (req, res, next) => {
           }
           // Otherwise, make use of the authenticate method to send back the response
           passport.authenticate("local")(req, res, () => {
+            console.log("here5");
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.json({ success: true, status: "Registration Successful!" });

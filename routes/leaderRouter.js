@@ -19,7 +19,7 @@ leaderRouter
       )
       .catch((error) => console.log(error));
   })
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.create(req.body)
       .then(
         (leader) => {
@@ -32,19 +32,23 @@ leaderRouter
       )
       .catch((err) => console.log(err));
   })
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /leaders");
   })
-  .delete(authenticate.verifyUser, (req, res, next) => {
-    Leaders.deleteMany({}).then((resp) => {
-      console.log(
-        "Deleted the documents from Leaders collection"
-      ).res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
-      res.json(resp);
-    });
-  });
+  .delete(
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Leaders.deleteMany({}).then((resp) => {
+        console.log(
+          "Deleted the documents from Leaders collection"
+        ).res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(resp);
+      });
+    }
+  );
 
 leaderRouter
   .route("/:leaderId")
@@ -66,10 +70,10 @@ leaderRouter
       )
       .catch((error) => console.log(error));
   })
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.end("POST operation not supported on /leaders/" + req.params.leaderId);
   })
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Leaders.findById(req.params.leaderId)
       .then(
         (leader) => {
@@ -95,17 +99,21 @@ leaderRouter
       )
       .catch((error) => console.log(error));
   })
-  .delete(authenticate.verifyUser, (req, res, next) => {
-    Leaders.findByIdAndRemove(req.params.leaderId)
-      .then(
-        (response) => {
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "application/json");
-          res.json(response);
-        },
-        (err) => console.log(err)
-      )
-      .catch((error) => console.log(error));
-  });
+  .delete(
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      Leaders.findByIdAndRemove(req.params.leaderId)
+        .then(
+          (response) => {
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.json(response);
+          },
+          (err) => console.log(err)
+        )
+        .catch((error) => console.log(error));
+    }
+  );
 
 module.exports = leaderRouter;

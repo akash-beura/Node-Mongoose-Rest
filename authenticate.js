@@ -6,15 +6,18 @@ var JwtExtract = require("passport-jwt").ExtractJwt;
 var jwt = require("jsonwebtoken");
 
 var config = require("./config");
-const { ExtractJwt } = require("passport-jwt");
 
 //Since we're using mongoose, it has authenticate method with the Schemas, so we don't need to explicitly add it.
 //Note: If you're not using passport-local-mongoose, we have to write our own function (uname,pwd, done)=>{}
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
 
-/* These 2 functions are provided bt plm for the session management to the User Schema */
-passport.serializeUser(User.serializeUser);
-passport.deserializeUser(User.deserializeUser);
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function (user, done) {
+  done(null, user);
+});
 
 exports.getToken = (user) => {
   return jwt.sign(user, config.secretKey, {
@@ -25,7 +28,7 @@ exports.getToken = (user) => {
 // Configuring the strategy for JSONwebtoken based strategy
 var opts = {};
 // This option specifies how JWT is extracted from request.
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.jwtFromRequest = JwtExtract.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = config.secretKey;
 
 // Here we declare our middleware which will make ur
@@ -35,7 +38,7 @@ exports.jwtPassport = passport.use(
   new JwtStrategy(opts, (jwt_payload, done) => {
     console.log("JWT Payload: ", jwt_payload);
     // after extracting the jwt payload, we will verify if the data is valid
-    User.findOne({ _id: jwt_payload.sub }, (err, user) => {
+    User.findOne({ _id: jwt_payload._id }, (err, user) => {
       if (err) return done(err, null);
       else if (user) return done(null, user);
       else return done(null, false);
@@ -45,3 +48,17 @@ exports.jwtPassport = passport.use(
 
 // if at any place you want to verify the user you can call this method.
 exports.verifyUser = passport.authenticate("jwt", { session: false });
+
+// This method is used to ensure only admin has access to the post.
+exports.verifyAdmin = (req, res, next) => {
+  console.log("check admin");
+  User.findById({ _id: req.user._id }).then((user) => {
+    if (user.admin == true) {
+      next();
+    } else {
+      var err = new Error("You're unauthorized to access this resource!");
+      err.status = 403;
+      next(err);
+    }
+  });
+};
