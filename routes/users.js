@@ -3,6 +3,7 @@ var router = express.Router();
 const bodyParser = require("body-parser");
 const User = require("../models/users");
 var passport = require("passport");
+var authenticate = require("../authenticate");
 
 // Use to to parse the incoming request body and include it in req.body
 router.use(bodyParser.json());
@@ -39,9 +40,15 @@ router.post("/signup", (req, res, next) => {
 // if the authenticate methods fails it automatically send back a error response
 // also when authenticate method is success it adds a 'user' property to the req object,
 router.post("/login", passport.authenticate("local"), (req, res, next) => {
+  // create the JWT token using the logic we wrote in authenticate.js
+  var token = authenticate.getToken({ _id: req.user._id });
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json");
-  res.json({ success: "true", status: "You're succesfully logged in" });
+  res.json({
+    success: "true",
+    token: token,
+    status: "You're succesfully logged in",
+  });
 });
 
 router.get("/logout", (req, res) => {
