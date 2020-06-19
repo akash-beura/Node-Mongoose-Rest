@@ -4,7 +4,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var passport = require("passport");
-var config = require('./config');
+var config = require("./config");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -13,6 +13,15 @@ var leaderRouter = require("./routes/leaderRouter");
 var promoRouter = require("./routes/promoRouter");
 var app = express();
 
+// If any request is coming, check if
+// it's coming on unsecured channel then redirect it to the secured server
+app.all("*", (req, res, next) => {
+  if (req.secure) return next();
+  else
+    res.redirect(
+      "https://" + req.hostname + ":" + app.get("secPort") + req.url
+    );
+});
 // app.use(cookieParser("12345-43434-43443"));
 
 // Basically passport.initialize() initialises the authentication module.

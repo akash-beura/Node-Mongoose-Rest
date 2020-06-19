@@ -51,14 +51,11 @@ exports.verifyUser = passport.authenticate("jwt", { session: false });
 
 // This method is used to ensure only admin has access to the post.
 exports.verifyAdmin = (req, res, next) => {
-  console.log("check admin");
-  User.findById({ _id: req.user._id }).then((user) => {
-    if (user.admin == true) {
-      next();
-    } else {
-      var err = new Error("You're unauthorized to access this resource!");
-      err.status = 403;
-      next(err);
-    }
-  });
+  if (req.user.admin == true) {
+    next();
+  } else {
+    var err = new Error("You're unauthorized to access this resource!");
+    err.status = 403;
+    next(err);
+  }
 };
