@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const authenticate = require("../authenticate");
 const multer = require("multer");
+const cors = require("./cors");
 
 //Multer setup start
 var storage = multer.diskStorage({
@@ -35,17 +36,31 @@ uploadRouter.use(bodyParser.json());
 
 uploadRouter
   .route("/")
-  .get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    res.statusCode = 403;
-    res.end("GET method not supported on /imageUpload");
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
   })
+  .get(
+    cors.cors,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      res.statusCode = 403;
+      res.end("GET method not supported on /imageUpload");
+    }
+  )
 
-  .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    res.statusCode = 403;
-    res.end("PUT method not supported on /imageUpload");
-  })
+  .put(
+    cors.corsWithOptions,
+    authenticate.verifyUser,
+    authenticate.verifyAdmin,
+    (req, res, next) => {
+      res.statusCode = 403;
+      res.end("PUT method not supported on /imageUpload");
+    }
+  )
 
   .delete(
+    cors.corsWithOptions,
     authenticate.verifyUser,
     authenticate.verifyAdmin,
     (req, res, next) => {
@@ -54,6 +69,7 @@ uploadRouter
     }
   )
   .post(
+    cors.corsWithOptions,
     authenticate.verifyUser,
     authenticate.verifyAdmin,
     upload.single("imageFile"), // we make use of multer here, it will allow to only upload a single file here/

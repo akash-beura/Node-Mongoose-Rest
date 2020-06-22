@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const authenticate = require("../authenticate");
+const cors = require("./cors");
 
 const promoRouter = express.Router();
 promoRouter.use(bodyParser.json());
@@ -10,6 +11,11 @@ const Promotions = require("../models/promotions");
 
 promoRouter
   .route("/")
+  // setting up corst: START
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
+  })
+  // setting up corst: END
   .get((req, res, next) => {
     Promotions.find({})
       .then(
@@ -23,7 +29,7 @@ promoRouter
       .catch((error) => console.log(error));
   })
 
-  .post(authenticate.verifyUser, (req, res, next) => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Promotions.create(req.body)
       .then(
         (promotion) => {
@@ -37,12 +43,12 @@ promoRouter
       .catch((err) => console.log(err));
   })
 
-  .put((req, res, next) => {
+  .put(cors.corsWithOptions, (req, res, next) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /promotions");
   })
 
-  .delete(authenticate.verifyUser, (req, res, next) => {
+  .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Promotions.deleteMany({}).then((resp) => {
       console.log(
         "Deleted the documents from Promotions collection"
@@ -54,6 +60,11 @@ promoRouter
 
 promoRouter
   .route("/:promoId")
+  // setting up corst: START
+  .options(cors.corsWithOptions, (req, res) => {
+    res.sendStatus(200);
+  })
+  // setting up corst: END
   .get((req, res, next) => {
     Promotions.findById(req.params.promoId)
       .then(
@@ -72,12 +83,12 @@ promoRouter
       )
       .catch((error) => console.log(error));
   })
-  .post((req, res, next) => {
+  .post(cors.corsWithOptions, (req, res, next) => {
     res.end(
       "POST operation not supported on /promotions/" + req.params.promoId
     );
   })
-  .put(authenticate.verifyUser, (req, res, next) => {
+  .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Promotions.findById(req.params.promotionId)
       .then(
         (promotion) => {
@@ -106,7 +117,7 @@ promoRouter
       )
       .catch((error) => console.log(error));
   })
-  .delete(authenticate.verifyUser, (req, res, next) => {
+  .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Promotions.findByIdAndRemove(req.params.promoId)
       .then(
         (response) => {
