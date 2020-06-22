@@ -63,17 +63,22 @@ router.post("/signup", cors.corsWithOptions, (req, res, next) => {
 
 // if the authenticate methods fails it automatically send back a error response
 // also when authenticate method is success it adds a 'user' property to the req object,
-router.post("/login", cors.corsWithOptions, passport.authenticate("local"), (req, res, next) => {
-  // create the JWT token using the logic we wrote in authenticate.js
-  var token = authenticate.getToken({ _id: req.user._id });
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "application/json");
-  res.json({
-    success: "true",
-    token: token,
-    status: "You're succesfully logged in",
-  });
-});
+router.post(
+  "/login",
+  cors.corsWithOptions,
+  passport.authenticate("local"),
+  (req, res, next) => {
+    // create the JWT token using the logic we wrote in authenticate.js
+    var token = authenticate.getToken({ _id: req.user._id });
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      success: "true",
+      token: token,
+      status: "You're succesfully logged in",
+    });
+  }
+);
 
 router.get("/logout", (req, res) => {
   if (req.session) {
@@ -88,5 +93,22 @@ router.get("/logout", (req, res) => {
     return next(err);
   }
 });
+
+router.get(
+  "/facebook/token",
+  passport.authenticate("facebook-token"),
+  (req, res) => {
+    if (req.user) {
+      var token = authenticate.getToken({ _id: req.user._id });
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json({
+        success: true,
+        token: token,
+        status: "You are successfully logged in!",
+      });
+    }
+  }
+);
 
 module.exports = router;
